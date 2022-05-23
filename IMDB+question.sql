@@ -14,8 +14,8 @@ USE imdb;
 -- Q1. Find the total number of rows in each table of the schema?
 -- Type your code below:
 
-
-
+SELECT table_name, table_rows from INFORMATION_SCHEMA.tables
+WHERE TABLE_SCHEMA = 'imdb';
 
 
 
@@ -24,6 +24,20 @@ USE imdb;
 
 -- Q2. Which columns in the movie table have null values?
 -- Type your code below:
+SELECT 
+		SUM(CASE WHEN id IS NULL THEN 1 ELSE 0 END) AS ID_null, 
+		SUM(CASE WHEN title IS NULL THEN 1 ELSE 0 END) AS title_null, 
+		SUM(CASE WHEN year IS NULL THEN 1 ELSE 0 END) AS year_null,
+		SUM(CASE WHEN date_published IS NULL THEN 1 ELSE 0 END) AS date_published_null,
+		SUM(CASE WHEN duration IS NULL THEN 1 ELSE 0 END) AS duration_null,
+		SUM(CASE WHEN country IS NULL THEN 1 ELSE 0 END) AS country_null,
+		SUM(CASE WHEN worlwide_gross_income IS NULL THEN 1 ELSE 0 END) AS worlwide_gross_income_null,
+		SUM(CASE WHEN languages IS NULL THEN 1 ELSE 0 END) AS languages_null,
+		SUM(CASE WHEN production_company IS NULL THEN 1 ELSE 0 END) AS production_company_null
+
+FROM movie;
+-- Columns with null values are (country, worlwide_gross_income, languages, production_company)
+
 
 
 
@@ -37,7 +51,6 @@ USE imdb;
 -- Q3. Find the total number of movies released each year? How does the trend look month wise? (Output expected)
 
 /* Output format for the first part:
-
 +---------------+-------------------+
 | Year			|	number_of_movies|
 +-------------------+----------------
@@ -45,8 +58,6 @@ USE imdb;
 |	2018		|		.			|
 |	2019		|		.			|
 +---------------+-------------------+
-
-
 Output format for the second part of the question:
 +---------------+-------------------+
 |	month_num	|	number_of_movies|
@@ -57,7 +68,14 @@ Output format for the second part of the question:
 +---------------+-------------------+ */
 -- Type your code below:
 
+SELECT year, COUNT(year) AS number_of_movies 
+FROM movie
+GROUP BY year;
 
+SELECT month(date_published) AS month_num, COUNT(month(date_published)) AS number_of_movies
+FROM movie
+GROUP BY month_num
+ORDER BY month_num;
 
 
 
@@ -72,6 +90,11 @@ We know USA and India produces huge number of movies each year. Lets find the nu
   
 -- Q4. How many movies were produced in the USA or India in the year 2019??
 -- Type your code below:
+SELECT country, COUNT(country) AS count_movies, year 
+FROM movie
+WHERE country='USA' OR country='India'
+GROUP BY country
+HAVING year = 2019;
 
 
 
@@ -88,6 +111,7 @@ Let’s find out the different genres in the dataset.*/
 
 -- Q5. Find the unique list of the genres present in the data set?
 -- Type your code below:
+SELECT DISTINCT genre AS Unique_Genres_List FROM genre;
 
 
 
@@ -104,11 +128,14 @@ Combining both the movie and genres table can give more interesting insights. */
 
 -- Q6.Which genre had the highest number of movies produced overall?
 -- Type your code below:
-
-
-
-
-
+SELECT g.genre, COUNT(g.genre) AS number_of_movies, m.year 
+FROM movie AS m
+INNER JOIN
+genre AS g
+ON m.id = g.movie_id
+GROUP BY g.genre
+ORDER BY number_of_movies DESC
+LIMIT 1;
 
 
 
@@ -120,6 +147,13 @@ So, let’s find out the count of movies that belong to only one genre.*/
 
 -- Q7. How many movies belong to only one genre?
 -- Type your code below:
+
+WITH CTE_genre AS(
+SELECT movie_id, COUNT(genre) AS number_of_genre_movies 
+FROM genre
+GROUP BY movie_id
+HAVING number_of_genre_movies = 1)
+SELECT COUNT(movie_id) AS number_of_movies_with_one_genre FROM CTE_genre;
 
 
 
@@ -139,7 +173,6 @@ Now, let's find out the possible duration of RSVP Movies’ next project.*/
 
 
 /* Output format:
-
 +---------------+-------------------+
 | genre			|	avg_duration	|
 +-------------------+----------------
@@ -148,6 +181,13 @@ Now, let's find out the possible duration of RSVP Movies’ next project.*/
 |	.			|		.			|
 +---------------+-------------------+ */
 -- Type your code below:
+SELECT g.genre, ROUND(AVG(m.duration),2) AS avg_duration 
+FROM
+movie AS m 
+INNER JOIN
+genre AS g
+ON m.id = g.movie_id
+GROUP BY g.genre;
 
 
 
@@ -171,9 +211,13 @@ Lets find where the movies of genre 'thriller' on the basis of number of movies.
 |drama			|	2312			|			2		  |
 +---------------+-------------------+---------------------+*/
 -- Type your code below:
-
-
-
+WITH genre_rankings AS(
+SELECT genre,count(genre) AS movie_count, 
+RANK() OVER(ORDER BY count(genre) DESC) AS genre_rank
+FROM genre
+GROUP BY genre)
+SELECT * FROM genre_rankings
+WHERE genre = 'Thriller';
 
 
 
@@ -203,6 +247,16 @@ To start with lets get the min and max values of different columns in the table*
 +---------------+-------------------+---------------------+----------------------+-----------------+-----------------+*/
 -- Type your code below:
 
+SELECT 
+
+	ROUND(MIN(avg_rating)) AS min_avg_rating,
+    ROUND(MAX(avg_rating)) AS max_avg_rating,
+	MIN(total_votes) AS min_total_votes,
+    MIN(total_votes) AS max_total_votes,
+	MIN(median_rating) AS min_median_rating,
+    MAX(median_rating) AS max_median_rating 
+    
+FROM ratings;
 
 
 
@@ -226,6 +280,15 @@ Now, let’s find out the top 10 movies based on average rating.*/
 +---------------+-------------------+---------------------+*/
 -- Type your code below:
 -- It's ok if RANK() or DENSE_RANK() is used too
+SELECT m.title, r.avg_rating, 
+DENSE_RANK() OVER(ORDER BY r.avg_rating DESC) AS movie_rank
+FROM movie AS m
+INNER JOIN
+ratings AS r
+ON m.id = r.movie_id
+LIMIT 10;
+
+
 
 
 
@@ -240,7 +303,6 @@ Summarising the ratings table based on the movie counts by median rating can giv
 
 -- Q12. Summarise the ratings table based on the movie counts by median ratings.
 /* Output format:
-
 +---------------+-------------------+
 | median_rating	|	movie_count		|
 +-------------------+----------------
@@ -250,6 +312,10 @@ Summarising the ratings table based on the movie counts by median rating can giv
 +---------------+-------------------+ */
 -- Type your code below:
 -- Order by is good to have
+SELECT median_rating, COUNT(movie_id) AS movie_count
+FROM ratings
+GROUP BY median_rating
+ORDER BY median_rating;
 
 
 
@@ -271,6 +337,15 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 | The Archers	   |		1		   |			1	  	 |
 +------------------+-------------------+---------------------+*/
 -- Type your code below:
+SELECT m.production_company,COUNT(m.title) AS movie_count,
+DENSE_RANK() OVER(ORDER BY COUNT(m.title) DESC) AS prod_company_rank
+FROM movie AS m
+INNER JOIN
+ratings AS r
+ON m.id = r.movie_id
+WHERE production_company IS NOT NULL AND r.avg_rating > 8
+GROUP BY production_company
+LIMIT 2;
 
 
 
@@ -285,7 +360,6 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 
 -- Q14. How many movies released in each genre during March 2017 in the USA had more than 1,000 votes?
 /* Output format:
-
 +---------------+-------------------+
 | genre			|	movie_count		|
 +-------------------+----------------
@@ -294,6 +368,18 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 |	.			|		.			|
 +---------------+-------------------+ */
 -- Type your code below:
+SELECT g.genre, COUNT(g.movie_id) AS movie_count
+FROM genre AS g
+INNER JOIN
+movie AS m
+ON g.movie_id = m.id
+INNER JOIN
+ratings AS r
+ON m.id = r.movie_id
+WHERE (m.date_published BETWEEN '2017-03-01'AND '2017-03-31') AND (m.country = 'USA') AND r.total_votes > 1000
+GROUP BY g.genre
+ORDER BY movie_count DESC;
+
 
 
 
@@ -315,6 +401,16 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 |	.			|		.			|			.		  |
 +---------------+-------------------+---------------------+*/
 -- Type your code below:
+SELECT m.title, r.avg_rating, g.genre
+FROM movie AS m
+INNER JOIN
+ratings AS r
+ON m.id = r.movie_id
+INNER JOIN
+genre AS g
+ON m.id = g.movie_id
+WHERE (Title REGEXP '^The') AND (r.avg_rating > 8)
+GROUP BY genre;
 
 
 
@@ -327,6 +423,15 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 -- You should also try your hand at median rating and check whether the ‘median rating’ column gives any significant insights.
 -- Q16. Of the movies released between 1 April 2018 and 1 April 2019, how many were given a median rating of 8?
 -- Type your code below:
+SELECT count(movie_id) AS movies 
+FROM 
+ratings AS ratings
+INNER JOIN 
+movie AS movie
+ON ratings.movie_id=movie.id
+WHERE (movie.date_published BETWEEN '2018-04-01' AND '2019-04-01') AND (ratings.median_rating = 8)
+GROUP BY ratings.median_rating;
+
 
 
 
@@ -341,6 +446,28 @@ Now, let's find out the production house with which RSVP Movies can partner for 
 -- Hint: Here you have to find the total number of votes for both German and Italian movies.
 -- Type your code below:
 
+with german_summary AS (
+SELECT SUM(r.total_votes) AS german_total_votes,
+RANK() OVER(ORDER BY SUM(r.total_votes)) AS unique_id
+FROM movie AS m
+INNER JOIN ratings AS r
+ON m.id=r.movie_id
+WHERE m.languages LIKE '%German%'
+), italian_summary AS (
+SELECT SUM(r.total_votes) AS italian_total_votes,
+RANK() OVER(ORDER BY sum(r.total_votes)) AS unique_id
+FROM movie AS m
+INNER JOIN ratings AS r
+ON m.id=r.movie_id
+WHERE m.languages LIKE '%Italian%'
+) SELECT *,
+CASE
+	WHEN german_total_votes > italian_total_votes THEN 'Yes' ELSE 'No'
+    END AS 'German_Movie_Is_Popular_Than_Italian_Movie'
+FROM german_summary
+INNER JOIN
+italian_summary
+USING(unique_id);    
 
 
 
@@ -369,6 +496,11 @@ Let’s begin by searching for null values in the tables.*/
 +---------------+-------------------+---------------------+----------------------+*/
 -- Type your code below:
 
+SELECT COUNT(*)-COUNT(name) AS name_nulls, 
+		COUNT(*)-COUNT(height) AS height_nulls, 
+		COUNT(*)-COUNT(date_of_birth) AS date_of_birth_nulls, 
+		COUNT(*)-COUNT(known_for_movies) AS known_for_movies_nulls
+FROM names; 
 
 
 
@@ -383,7 +515,6 @@ Let’s find out the top three directors in the top three genres who can be hire
 -- Q19. Who are the top three directors in the top three genres whose movies have an average rating > 8?
 -- (Hint: The top three genres would have the most number of movies with an average rating > 8.)
 /* Output format:
-
 +---------------+-------------------+
 | director_name	|	movie_count		|
 +---------------+-------------------|
@@ -392,6 +523,34 @@ Let’s find out the top three directors in the top three genres who can be hire
 |	.			|		.			|
 +---------------+-------------------+ */
 -- Type your code below:
+WITH genre_top3 AS
+(
+	SELECT g.genre, COUNT(g.movie_id) AS movie_count,r.avg_rating
+	FROM movie AS m
+	INNER JOIN genre AS g
+	ON m.id=g.movie_id
+	INNER JOIN ratings AS r
+	ON m.id=r.movie_id
+	WHERE r.avg_rating>8
+	GROUP BY genre
+	ORDER BY movie_count DESC
+	LIMIT 3
+)
+SELECT n.name as director_name, COUNT(m.id) as movie_count
+FROM names AS n
+INNER JOIN director_mapping AS d
+ON n.id=d.name_id
+INNER JOIN movie AS m
+ON d.movie_id=m.id
+INNER JOIN genre AS g
+ON m.id=g.movie_id
+INNER JOIN ratings AS r
+ON m.id=r.movie_id
+WHERE r.avg_rating>8 AND g.genre IN (SELECT genre FROM genre_top3)
+GROUP BY director_name
+ORDER BY movie_count DESC
+LIMIT 3; 
+
 
 
 
@@ -406,7 +565,6 @@ Now, let’s find out the top two actors.*/
 
 -- Q20. Who are the top two actors whose movies have a median rating >= 8?
 /* Output format:
-
 +---------------+-------------------+
 | actor_name	|	movie_count		|
 +-------------------+----------------
@@ -414,6 +572,18 @@ Now, let’s find out the top two actors.*/
 |	.			|		.			|
 +---------------+-------------------+ */
 -- Type your code below:
+SELECT DISTINCT name AS actor_name, COUNT(r.movie_id) AS movie_count
+FROM ratings AS r
+INNER JOIN role_mapping AS rm
+ON rm.movie_id = r.movie_id
+INNER JOIN names AS n
+ON rm.name_id = n.id
+WHERE median_rating >= 8 AND category = 'actor'
+GROUP BY name
+ORDER BY movie_count DESC
+LIMIT 2;
+
+	
 
 
 
@@ -437,6 +607,14 @@ Let’s find out the top three production houses in the world.*/
 +-------------------+-------------------+---------------------+*/
 -- Type your code below:
 
+SELECT production_company, SUM(r.total_votes) AS vote_count,
+DENSE_RANK() OVER(ORDER BY sum(r.total_votes)DESC) AS prod_comp_rank
+FROM movie AS m
+INNER JOIN
+ratings AS r 
+ON m.id= r.movie_id
+GROUP BY production_company
+LIMIT 3;
 
 
 
@@ -448,7 +626,6 @@ Let’s find out the top three production houses in the world.*/
 
 /*Yes Marvel Studios rules the movie world.
 So, these are the top three production houses based on the number of votes received by the movies they have produced.
-
 Since RSVP Movies is based out of Mumbai, India also wants to woo its local audience. 
 RSVP Movies also wants to hire a few Indian actors for its upcoming project to give a regional feel. 
 Let’s find who these actors could be.*/
@@ -468,7 +645,21 @@ Let’s find who these actors could be.*/
 +---------------+-------------------+---------------------+----------------------+-----------------+*/
 -- Type your code below:
 
-
+SELECT name AS actor_name, total_votes,
+		COUNT(m.id) AS movie_count,
+		ROUND(SUM(avg_rating*total_votes)/SUM(total_votes),2) AS actor_avg_rating,
+		RANK() OVER(ORDER BY  ROUND(SUM(avg_rating*total_votes)/SUM(total_votes),2) DESC) AS actor_rank		
+FROM movie AS m 
+INNER JOIN ratings AS r 
+ON m.id = r.movie_id 
+INNER JOIN role_mapping AS rm 
+ON m.id=rm.movie_id 
+INNER JOIN names AS nm 
+ON rm.name_id=nm.id
+WHERE category='actor' AND country= 'India'
+GROUP BY name
+HAVING movie_count>=5
+LIMIT 3;
 
 
 
@@ -491,12 +682,21 @@ Let’s find who these actors could be.*/
 |		.		|			.		|	       .		  |	   .	    		 |		.	       |
 +---------------+-------------------+---------------------+----------------------+-----------------+*/
 -- Type your code below:
-
-
-
-
-
-
+SELECT name AS actress_name, r.total_votes,
+                COUNT(m.id) AS movie_count,
+                ROUND(SUM(avg_rating*total_votes)/SUM(total_votes),2) AS actress_avg_rating,
+               	RANK() OVER(ORDER BY  ROUND(SUM(avg_rating*total_votes)/SUM(total_votes),2) DESC) AS actress_rank		
+FROM movie AS m 
+INNER JOIN ratings AS r 
+ON m.id = r.movie_id 
+INNER JOIN role_mapping AS rm 
+ON m.id=rm.movie_id 
+INNER JOIN names AS nm 
+ON rm.name_id=nm.id
+WHERE rm.category='actress' AND m.country LIKE '%India%' AND m.languages LIKE '%Hindi%'
+GROUP BY name
+HAVING COUNT(m.country='India')>=3
+LIMIT 5;
 
 
 
@@ -505,14 +705,26 @@ Now let us divide all the thriller movies in the following categories and find o
 
 
 /* Q24. Select thriller movies as per avg rating and classify them in the following category: 
-
 			Rating > 8: Superhit movies
 			Rating between 7 and 8: Hit movies
 			Rating between 5 and 7: One-time-watch movies
 			Rating < 5: Flop movies
 --------------------------------------------------------------------------------------------*/
 -- Type your code below:
-
+SELECT title,r.avg_rating,
+	CASE 
+		WHEN avg_rating > 8 THEN 'Superhit movies'
+		WHEN avg_rating BETWEEN 7 AND 8 THEN 'Hit movies'
+		WHEN avg_rating BETWEEN 5 AND 7 THEN 'One-time-watch movies'
+		WHEN avg_rating < 5 THEN 'Flop movies'
+	END AS avg_rating_category
+FROM movie AS m
+INNER JOIN genre AS g
+ON m.id=g.movie_id
+INNER JOIN ratings AS r
+ON m.id=r.movie_id
+WHERE genre='thriller'
+ORDER BY r.avg_rating DESC;
 
 
 
@@ -538,7 +750,16 @@ Now, you will perform some tasks that will give you a broader understanding of t
 |		.		|			.		|	       .		  |	   .	    		 |
 +---------------+-------------------+---------------------+----------------------+*/
 -- Type your code below:
+SELECT genre,
+	ROUND(AVG(duration)) AS avg_duration,
+	SUM(ROUND(AVG(duration),2)) OVER(ORDER BY genre ROWS UNBOUNDED PRECEDING) AS running_total_duration,
+	ROUND(AVG(ROUND(AVG(duration),2)) OVER(ORDER BY genre ROWS 10 PRECEDING),2) AS moving_avg_duration
 
+FROM movie AS m 
+INNER JOIN genre AS g 
+ON m.id= g.movie_id
+GROUP BY genre
+ORDER BY genre;
 
 
 
@@ -567,9 +788,34 @@ Now, you will perform some tasks that will give you a broader understanding of t
 -- Type your code below:
 
 -- Top 3 Genres based on most number of movies
+WITH top_3_genre AS
+( 	
+	SELECT genre, COUNT(movie_id) AS number_of_movies
+    FROM genre AS g
+    INNER JOIN movie AS m
+    ON g.movie_id = m.id
+    GROUP BY genre
+    ORDER BY COUNT(movie_id) DESC
+    LIMIT 3
+),
 
+top_5 AS
+(
+	SELECT genre,
+			year,
+			title AS movie_name,
+			worlwide_gross_income,
+			DENSE_RANK() OVER(PARTITION BY year ORDER BY worlwide_gross_income DESC) AS movie_rank
+        
+	FROM movie AS m 
+    INNER JOIN genre AS g 
+    ON m.id= g.movie_id
+	WHERE genre IN (SELECT genre FROM top_3_genre)
+)
 
-
+SELECT *
+FROM top_5
+WHERE movie_rank<=5;
 
 
 
@@ -588,8 +834,14 @@ Now, you will perform some tasks that will give you a broader understanding of t
 |	.				|		.			|			.		  |
 +-------------------+-------------------+---------------------+*/
 -- Type your code below:
-
-
+SELECT production_company ,count(m.id)AS movie_count, 
+RANK() OVER(ORDER BY count(id) DESC) AS prod_comp_rank
+FROM movie AS m
+INNER JOIN ratings AS r
+ON m.id=r.movie_id
+WHERE median_rating>=8 AND production_company IS NOT NULL AND position(',' IN languages)>0
+GROUP BY production_company
+LIMIT 2;
 
 
 
@@ -611,7 +863,20 @@ Now, you will perform some tasks that will give you a broader understanding of t
 +---------------+-------------------+---------------------+----------------------+-----------------+*/
 -- Type your code below:
 
-
+SELECT name, SUM(total_votes) AS total_votes,
+		COUNT(rm.movie_id) AS movie_count,
+		avg_rating,
+        DENSE_RANK() OVER(ORDER BY avg_rating DESC) AS actress_rank
+FROM names AS n
+INNER JOIN role_mapping AS rm
+ON n.id = rm.name_id
+INNER JOIN ratings AS r
+ON r.movie_id = rm.movie_id
+INNER JOIN genre AS g
+ON r.movie_id = g.movie_id
+WHERE category = 'actress' AND avg_rating > 8 AND genre = 'drama'
+GROUP BY name
+LIMIT 3;
 
 
 
@@ -628,7 +893,6 @@ Total votes
 Min rating
 Max rating
 total movie durations
-
 Format:
 +---------------+-------------------+---------------------+----------------------+--------------+--------------+------------+------------+----------------+
 | director_id	|	director_name	|	number_of_movies  |	avg_inter_movie_days |	avg_rating	| total_votes  | min_rating	| max_rating | total_duration |
@@ -643,13 +907,59 @@ Format:
 |	.			|		.			|			.		  |	       .			 |	   .	    |	.		   |	.		|	.		 |		.		  |
 |	.			|		.			|			.		  |	       .			 |	   .	    |	.		   |	.		|	.		 |		.		  |
 +---------------+-------------------+---------------------+----------------------+--------------+--------------+------------+------------+----------------+
-
 --------------------------------------------------------------------------------------------*/
 -- Type you code below:
 
+WITH movie_date_information AS
+(
+SELECT d.name_id, name, d.movie_id,
+	   m.date_published, 
+       LEAD(date_published, 1) OVER(PARTITION BY d.name_id ORDER BY date_published, d.movie_id) AS next_movie_date
+FROM director_mapping d
+	 JOIN names AS n 
+     ON d.name_id=n.id 
+	 JOIN movie AS m 
+     ON d.movie_id=m.id
+),
 
-
-
-
-
+date_diff AS
+(
+	 SELECT *, DATEDIFF(next_movie_date, date_published) AS diff
+	 FROM movie_date_information
+ ),
+ 
+ avg_inter_days AS
+ (
+	 SELECT name_id, AVG(diff) AS avg_inter_movie_days
+	 FROM date_diff
+	 GROUP BY name_id
+ ),
+ 
+ final_output AS
+ (
+	 SELECT d.name_id AS director_id,
+		 name AS director_name,
+		 COUNT(d.movie_id) AS number_of_movies,
+		 ROUND(avg_inter_movie_days) AS avg_inter_movie_days,
+		 ROUND(AVG(avg_rating),2) AS avg_rating,
+		 SUM(total_votes) AS total_votes,
+		 MIN(avg_rating) AS min_rating,
+		 MAX(avg_rating) AS max_rating,
+		 SUM(duration) AS total_duration,
+		 ROW_NUMBER() OVER(ORDER BY COUNT(d.movie_id) DESC) AS director_rank
+	 FROM
+		 names AS n 
+         JOIN director_mapping AS d 
+         ON n.id=d.name_id
+		 JOIN ratings AS r 
+         ON d.movie_id=r.movie_id
+		 JOIN movie AS m 
+         ON m.id=r.movie_id
+		 JOIN avg_inter_days AS a 
+         ON a.name_id=d.name_id
+	 GROUP BY director_id
+ )
+ SELECT *	
+ FROM final_output
+ LIMIT 9; 
 
