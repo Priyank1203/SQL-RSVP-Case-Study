@@ -162,11 +162,6 @@ GROUP BY g.genre;
 
 
 
-
-
-
-
-
 /* Now you know, movies of genre 'Drama' (produced highest in number in 2019) has the average duration of 106.77 mins.
 Lets find where the movies of genre 'thriller' on the basis of number of movies.*/
 
@@ -188,10 +183,6 @@ FROM genre
 GROUP BY genre)
 SELECT * FROM genre_rankings
 WHERE genre = 'Thriller';
-
-
-
-
 
 
 
@@ -229,9 +220,6 @@ SELECT
 FROM ratings;
 
 
-
-
-
     
 
 /* So, the minimum and maximum values in each column of the ratings table are in the expected range. 
@@ -260,13 +248,6 @@ LIMIT 10;
 
 
 
-
-
-
-
-
-
-
 /* Do you find you favourite movie FAN in the top 10 movies with an average rating of 9.6? If not, please check your code again!!
 So, now that you know the top 10 movies, do you think character actors and filler actors can be from these movies?
 Summarising the ratings table based on the movie counts by median rating can give an excellent insight.*/
@@ -286,12 +267,6 @@ SELECT median_rating, COUNT(movie_id) AS movie_count
 FROM ratings
 GROUP BY median_rating
 ORDER BY median_rating;
-
-
-
-
-
-
 
 
 
@@ -316,13 +291,6 @@ ON m.id = r.movie_id
 WHERE production_company IS NOT NULL AND r.avg_rating > 8
 GROUP BY production_company
 LIMIT 2;
-
-
-
-
-
-
-
 
 
 -- It's ok if RANK() or DENSE_RANK() is used too
@@ -353,12 +321,6 @@ ORDER BY movie_count DESC;
 
 
 
-
-
-
-
-
-
 -- Lets try to analyse with a unique problem statement.
 -- Q15. Find movies of each genre that start with the word ‘The’ and which have an average rating > 8?
 /* Output format:
@@ -384,12 +346,6 @@ GROUP BY genre;
 
 
 
-
-
-
-
-
-
 -- You should also try your hand at median rating and check whether the ‘median rating’ column gives any significant insights.
 -- Q16. Of the movies released between 1 April 2018 and 1 April 2019, how many were given a median rating of 8?
 -- Type your code below:
@@ -401,12 +357,6 @@ movie AS movie
 ON ratings.movie_id=movie.id
 WHERE (movie.date_published BETWEEN '2018-04-01' AND '2019-04-01') AND (ratings.median_rating = 8)
 GROUP BY ratings.median_rating;
-
-
-
-
-
-
 
 
 
@@ -442,14 +392,10 @@ USING(unique_id);
 
 
 
-
-
-
 -- Answer is Yes
 
 /* Now that you have analysed the movies, genres and ratings tables, let us now analyse another table, the names table. 
 Let’s begin by searching for null values in the tables.*/
-
 
 
 
@@ -471,8 +417,6 @@ SELECT COUNT(*)-COUNT(name) AS name_nulls,
 		COUNT(*)-COUNT(date_of_birth) AS date_of_birth_nulls, 
 		COUNT(*)-COUNT(known_for_movies) AS known_for_movies_nulls
 FROM names; 
-
-
 
 
 
@@ -524,12 +468,6 @@ LIMIT 3;
 
 
 
-
-
-
-
-
-
 /* James Mangold can be hired as the director for RSVP's next project. Do you remeber his movies, 'Logan' and 'The Wolverine'. 
 Now, let’s find out the top two actors.*/
 
@@ -556,12 +494,6 @@ LIMIT 2;
 	
 
 
-
-
-
-
-
-
 /* Have you find your favourite actor 'Mohanlal' in the list. If no, please check your code again. 
 RSVP Movies plans to partner with other global production houses. 
 Let’s find out the top three production houses in the world.*/
@@ -585,11 +517,6 @@ ratings AS r
 ON m.id= r.movie_id
 GROUP BY production_company
 LIMIT 3;
-
-
-
-
-
 
 
 
@@ -630,7 +557,6 @@ WHERE category='actor' AND country= 'India'
 GROUP BY name
 HAVING movie_count>=5
 LIMIT 3;
-
 
 
 
@@ -700,9 +626,6 @@ ORDER BY r.avg_rating DESC;
 
 
 
-
-
-
 /* Until now, you have analysed various tables of the data set. 
 Now, you will perform some tasks that will give you a broader understanding of the data in this segment.*/
 
@@ -730,11 +653,6 @@ INNER JOIN genre AS g
 ON m.id= g.movie_id
 GROUP BY genre
 ORDER BY genre;
-
-
-
-
-
 
 
 
@@ -786,8 +704,6 @@ top_5 AS
 SELECT *
 FROM top_5
 WHERE movie_rank<=5;
-
-
 
 
 
