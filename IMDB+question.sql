@@ -19,9 +19,6 @@ WHERE TABLE_SCHEMA = 'imdb';
 
 
 
-
-
-
 -- Q2. Which columns in the movie table have null values?
 -- Type your code below:
 SELECT 
@@ -37,14 +34,6 @@ SELECT
 
 FROM movie;
 -- Columns with null values are (country, worlwide_gross_income, languages, production_company)
-
-
-
-
-
-
-
-
 
 
 -- Now as you can see four columns of the movie table has null values. Let's look at the at the movies released each year. 
@@ -80,10 +69,6 @@ ORDER BY month_num;
 
 
 
-
-
-
-
 /*The highest number of movies is produced in the month of March.
 So, now that you have understood the month-wise trend of movies, let’s take a look at the other details in the movies table. 
 We know USA and India produces huge number of movies each year. Lets find the number of movies produced by USA or India for the last year.*/
@@ -99,12 +84,6 @@ HAVING year = 2019;
 
 
 
-
-
-
-
-
-
 /* USA and India produced more than a thousand movies(you know the exact number!) in the year 2019.
 Exploring table Genre would be fun!! 
 Let’s find out the different genres in the dataset.*/
@@ -112,11 +91,6 @@ Let’s find out the different genres in the dataset.*/
 -- Q5. Find the unique list of the genres present in the data set?
 -- Type your code below:
 SELECT DISTINCT genre AS Unique_Genres_List FROM genre;
-
-
-
-
-
 
 
 
@@ -154,10 +128,6 @@ FROM genre
 GROUP BY movie_id
 HAVING number_of_genre_movies = 1)
 SELECT COUNT(movie_id) AS number_of_movies_with_one_genre FROM CTE_genre;
-
-
-
-
 
 
 
